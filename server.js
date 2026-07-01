@@ -31,12 +31,12 @@ app.post('/calcular-lucro', (req, res) => {
         return numeroArredondado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    // 4. GERAÇÃO AUTOMÁTICA DE GRÁFICOS VISUAIS (Codificação Avançada para Discord)
+    // 4. GERAÇÃO AUTOMÁTICA DE GRÁFICOS VISUAIS (Bypass de Segurança do Discord)
     let g25 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro25;
     let g30 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro30;
     
-    // URL convertida em Hexadecimal limpo para o Discord aceitar como imagem nativa sem bloquear
-    const urlGraficoPizza = `https://quickchart.io:[%27Parceiros%27,%27Nao%20Parceiros%27],datasets:[%7Bdata:[${g25},${g30}],backgroundColor:[%27%232ecc71%27,%27%23e74c3c%27]%7D]%7D%7D`;
+    // Adicionado o final "&format=png&.png" para enganar o cache do Discord e forçar a renderização visual
+    const urlGraficoPizza = `https://quickchart.io:[%27Parceiros%27,%27Nao%20Parceiros%27],datasets:[%7Bdata:[${g25},${g30}],backgroundColor:[%27%232ecc71%27,%27%23e74c3c%27]%7D]%7D%7D&format=png&.png`;
 
     // 5. Retorna os dados mapeados para o BotGhost incluindo os links dos gráficos
     res.json({
