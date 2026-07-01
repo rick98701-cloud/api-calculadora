@@ -32,7 +32,7 @@ app.post('/calcular-lucro', async (req, res) => {
         return numeroArredondado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    // 4. GERAÇÃO DO GRÁFICO DIRETAMENTE NO SERVIDOR
+    // 4. GERAÇÃO DO GRÁFICO OTIMIZADO (CORES PREMIUM + NÚMEROS DESTACADOS)
     let g25 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro25;
     let g30 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro30;
 
@@ -42,28 +42,55 @@ app.post('/calcular-lucro', async (req, res) => {
         myChart.setConfig({
             type: 'pie',
             data: {
-                labels: ['Parceiros', 'Nao Parceiros'],
+                labels: ['Parceiros', 'Não Parceiros'],
                 datasets: [{
                     data: [g25, g30],
-                    backgroundColor: ['#2ecc71', '#e74c3c']
+                    // Cores Premium: Verde Esmeralda Neon e Vermelho Coral Vibrante
+                    backgroundColor: ['#2ecc71', '#ff4757'], 
+                    borderColor: '#1b1c21', // Borda escura para dar profundidade
+                    borderWidth: 3 // Espessura da separação das fatias
                 }]
             },
             options: {
-                legend: { labels: { fontColor: '#ffffff', fontSize: 14 } },
-                title: { display: true, text: 'Divisao de Lucros Ollympyus', fontColor: '#ffffff', fontSize: 18 }
+                legend: { 
+                    labels: { fontColor: '#ffffff', fontSize: 14, fontStyle: 'bold' } 
+                },
+                title: { 
+                    display: true, 
+                    text: 'DIVISÃO DE LUCROS OLLYMPYUS', 
+                    fontColor: '#ffffff', 
+                    fontSize: 16, 
+                    fontStyle: 'bold' 
+                },
+                plugins: {
+                    // Ativa e destaca os números em negrito dentro do desenho da pizza
+                    datalabels: {
+                        display: true,
+                        color: '#ffffff',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        // Adiciona sombreamento nos números para destacar caso fiquem em cima de cores claras
+                        textShadowColor: '#000000',
+                        textShadowBlur: 4
+                    }
+                }
             }
         });
+        
+        // Define o tamanho ideal do gráfico para não cortar as legendas no Discord
+        myChart.setWidth(500);
+        myChart.setHeight(330);
         myChart.setBackgroundColor('#1b1c21');
         
-        // Retorna uma URL curta e pré-renderizada estável para o BotGhost
         urlGraficoPizza = await myChart.getShortUrl();
     } catch (error) {
         console.log("Erro ao gerar gráfico:", error);
-        // Fallback caso a API de renderização falhe
-        urlGraficoPizza = "https://quickchart.io:[%27Erro%27],datasets:[%7Bdata:[1]%7D]%7D%7D";
+        urlGraficoPizza = "https://quickchart.io:[%27Erro%27],datasets:[%7Bdata:%7D]%7D%7D";
     }
 
-    // 5. Retorna os dados mapeados para o BotGhost incluindo os links dos gráficos
+    // 5. Retorna os dados mapeados para o BotGhost
     res.json({
         lucro_puro_25: lucro25.toFixed(2),
         lucro_puro_30: lucro30.toFixed(2),
@@ -77,4 +104,4 @@ app.post('/calcular-lucro', async (req, res) => {
     });
 });
 
-app.listen(3000, () => console.log('API Ollympyus Gráficos Estáticos Rodando!'));
+app.listen(3000, () => console.log('API Ollympyus Gráficos Premium Rodando!'));
