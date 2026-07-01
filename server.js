@@ -31,12 +31,12 @@ app.post('/calcular-lucro', (req, res) => {
         return numeroArredondado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    // 4. GERAÇÃO AUTOMÁTICA DE GRÁFICOS VISUAIS (Formato Limpo e Escuro para o Discord)
-    // Se ambos os lucros forem zero, define valores padrão (1, 1) para o gráfico não nascer quebrado
+    // 4. GERAÇÃO AUTOMÁTICA DE GRÁFICOS VISUAIS (Codificação Avançada para Discord)
     let g25 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro25;
     let g30 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro30;
     
-    const urlGraficoPizza = `https://quickchart.io{type:%27pie%27,data:{labels:[%27Parceiros%27,%27Nao%20Parceiros%27],datasets:[{data:[${g25},${g30}],backgroundColor:[%27%232ecc71%27,%27%23e74c3c%27]}]}}`;
+    // URL convertida em Hexadecimal limpo para o Discord aceitar como imagem nativa sem bloquear
+    const urlGraficoPizza = `https://quickchart.io:[%27Parceiros%27,%27Nao%20Parceiros%27],datasets:[%7Bdata:[${g25},${g30}],backgroundColor:[%27%232ecc71%27,%27%23e74c3c%27]%7D]%7D%7D`;
 
     // 5. Retorna os dados mapeados para o BotGhost incluindo os links dos gráficos
     res.json({
@@ -48,7 +48,6 @@ app.post('/calcular-lucro', (req, res) => {
         lucro_total_misturado: formatarBR(lucroRealGeral),
         liquido_retido_25: formatarBR(retido25),
         liquido_retido_30: formatarBR(retido30),
-        // Tag gerada pela API para colocar no campo Image URL do BotGhost
         grafico_url: urlGraficoPizza
     });
 });
