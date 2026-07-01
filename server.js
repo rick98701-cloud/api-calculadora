@@ -15,40 +15,54 @@ app.post('/calcular-lucro', (req, res) => {
     } else if (tipoLavagem === 'nao_parceiro') {
         lucro30 += (valorBruto * 0.30);
     } else if (tipoLavagem === 'leitura') {
-        // Modo leitura explícito: garante que as variáveis mantenham o valor original vindo do BotGhost
         lucro25 = lucro25;
         lucro30 = lucro30;
     }
 
-    // 3. Processa a matemática global do monitoramento com precisão decimal exata
+    // 3. Processa a matemática global com precisão decimal exata
     let faturamentoCheio = (lucro25 * 4) + (lucro30 / 0.30);
     let lucroRealGeral = lucro25 + lucro30;
-    
-    // Fórmulas exatas baseadas nas taxas (75% retido para parceiros e 70% retido para não parceiros)
     let retido25 = lucro25 * 3; 
-    let retido30 = (lucro30 / 0.30) * 0.70; // Substitui o 2.3333 por divisão/multiplicação real para evitar quebra de centavos
+    let retido30 = (lucro30 / 0.30) * 0.70;
 
-    // Função interna para aplicar os pontos padrão brasileiro (ex: 2.000.000,00)
+    // Função interna para aplicar os pontos padrão brasileiro
     const formatarBR = (num) => {
-        // Corrige flutuações decimais JavaScript antes de formatar o texto para o Discord
         const numeroArredondado = Math.round((num + Number.EPSILON) * 100) / 100;
         return numeroArredondado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    // 4. Retorna os dados mapeados para o BotGhost
+    // 4. GERAÇÃO AUTOMÁTICA DE GRÁFICOS VISUAIS (QuickChart)
+    // Gráfico de Pizza comparando o Lucro de 25% vs Lucro de 30%
+    const urlGraficoPizza = `https://quickchart.io{encodeURIComponent(JSON.stringify({
+        type: 'pie',
+        data: {
+            labels: ['Lucro Parceiros (25%)', 'Lucro Não Parceiros (30%)'],
+            datasets: [{
+                data: [lucro25, lucro30],
+                backgroundColor: ['#2ecc71', '#e74c3c']
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { labels: { fontColor: '#ffffff', fontSize: 14 } },
+                title: { display: true, text: 'Divisão de Lucros Ollympyus', fontColor: '#ffffff', fontSize: 18 }
+            }
+        }
+    }))}`;
+
+    // 5. Retorna os dados mapeados para o BotGhost incluindo os links dos gráficos
     res.json({
-        // Envia o número decimal puro formatado como TEXTO fixo com duas casas decimais para o BotGhost salvar sem rejeição
         lucro_puro_25: lucro25.toFixed(2),
         lucro_puro_30: lucro30.toFixed(2),
-        
-        // Envia os textos com os pontos de milhar para a tela do Discord
         lucro_acumulado_25: formatarBR(lucro25),
         lucro_acumulado_30: formatarBR(lucro30),
         faturamento_total: formatarBR(faturamentoCheio),
         lucro_total_misturado: formatarBR(lucroRealGeral),
         liquido_retido_25: formatarBR(retido25),
-        liquido_retido_30: formatarBR(retido30)
+        liquido_retido_30: formatarBR(retido30),
+        // Nova tag gerada pela API para colocar na imagem do Discord
+        grafico_url: urlGraficoPizza
     });
 });
 
-app.listen(3000, () => console.log('API Ollympyus Decimal String Rodando!'));
+app.listen(3000, () => console.log('API Ollympyus Decimal String + Gráficos Rodando!'));
