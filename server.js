@@ -32,7 +32,7 @@ app.post('/calcular-lucro', async (req, res) => {
         return numeroArredondado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    // 4. GERAÇÃO DO GRÁFICO OTIMIZADO (CORES PREMIUM + NÚMEROS DESTACADOS)
+    // 4. GERAÇÃO DO GRÁFICO GLOBAL NEUTRO (SEM TÍTULO FIXO)
     let g25 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro25;
     let g30 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro30;
 
@@ -45,10 +45,9 @@ app.post('/calcular-lucro', async (req, res) => {
                 labels: ['Parceiros', 'Não Parceiros'],
                 datasets: [{
                     data: [g25, g30],
-                    // Cores Premium: Verde Esmeralda Neon e Vermelho Coral Vibrante
                     backgroundColor: ['#2ecc71', '#ff4757'], 
-                    borderColor: '#1b1c21', // Borda escura para dar profundidade
-                    borderWidth: 3 // Espessura da separação das fatias
+                    borderColor: '#1b1c21', 
+                    borderWidth: 3 
                 }]
             },
             options: {
@@ -56,14 +55,9 @@ app.post('/calcular-lucro', async (req, res) => {
                     labels: { fontColor: '#ffffff', fontSize: 14, fontStyle: 'bold' } 
                 },
                 title: { 
-                    display: true, 
-                    text: 'DIVISÃO DE LUCROS OLLYMPYUS', 
-                    fontColor: '#ffffff', 
-                    fontSize: 16, 
-                    fontStyle: 'bold' 
+                    display: false // Desativa completamente o título interno do gráfico para torná-lo genérico
                 },
                 plugins: {
-                    // Ativa e destaca os números em negrito dentro do desenho da pizza
                     datalabels: {
                         display: true,
                         color: '#ffffff',
@@ -71,7 +65,6 @@ app.post('/calcular-lucro', async (req, res) => {
                             size: 16,
                             weight: 'bold'
                         },
-                        // Adiciona sombreamento nos números para destacar caso fiquem em cima de cores claras
                         textShadowColor: '#000000',
                         textShadowBlur: 4
                     }
@@ -79,9 +72,8 @@ app.post('/calcular-lucro', async (req, res) => {
             }
         });
         
-        // Define o tamanho ideal do gráfico para não cortar as legendas no Discord
         myChart.setWidth(500);
-        myChart.setHeight(330);
+        myChart.setHeight(300); // Reduzido levemente a altura para remover o espaço em branco do título
         myChart.setBackgroundColor('#1b1c21');
         
         urlGraficoPizza = await myChart.getShortUrl();
@@ -104,4 +96,4 @@ app.post('/calcular-lucro', async (req, res) => {
     });
 });
 
-app.listen(3000, () => console.log('API Ollympyus Gráficos Premium Rodando!'));
+app.listen(3000, () => console.log('API Ollympyus Gráficos Global Neutro Rodando!'));
