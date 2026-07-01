@@ -14,17 +14,25 @@ app.post('/calcular-lucro', (req, res) => {
         lucro25 += (valorBruto * 0.25);
     } else if (tipoLavagem === 'nao_parceiro') {
         lucro30 += (valorBruto * 0.30);
+    } else if (tipoLavagem === 'leitura') {
+        // Modo leitura explícito: garante que as variáveis mantenham o valor original vindo do BotGhost
+        lucro25 = lucro25;
+        lucro30 = lucro30;
     }
 
-    // 3. Processa a matemática global do monitoramento com precisão decimal
+    // 3. Processa a matemática global do monitoramento com precisão decimal exata
     let faturamentoCheio = (lucro25 * 4) + (lucro30 / 0.30);
     let lucroRealGeral = lucro25 + lucro30;
-    let retido25 = lucro25 * 3;
-    let retido30 = lucro30 * 2.3333;
+    
+    // Fórmulas exatas baseadas nas taxas (75% retido para parceiros e 70% retido para não parceiros)
+    let retido25 = lucro25 * 3; 
+    let retido30 = (lucro30 / 0.30) * 0.70; // Substitui o 2.3333 por divisão/multiplicação real para evitar quebra de centavos
 
     // Função interna para aplicar os pontos padrão brasileiro (ex: 2.000.000,00)
     const formatarBR = (num) => {
-        return Number(num).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        // Corrige flutuações decimais JavaScript antes de formatar o texto para o Discord
+        const numeroArredondado = Math.round((num + Number.EPSILON) * 100) / 100;
+        return numeroArredondado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
     // 4. Retorna os dados mapeados para o BotGhost
