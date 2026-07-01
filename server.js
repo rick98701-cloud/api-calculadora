@@ -1,8 +1,9 @@
 const express = require('express');
+const ChartJsImage = require('chartjs-to-image');
 const app = express();
 app.use(express.json());
 
-app.post('/calcular-lucro', (req, res) => {
+app.post('/calcular-lucro', async (req, res) => {
     // 1. Limpa e converte as entradas diretamente de texto para números decimais reais
     let lucro25 = parseFloat(String(req.body.lucro_acumulado_25).replace(/[^\d.-]/g, '')) || 0;
     let lucro30 = parseFloat(String(req.body.lucro_acumulado_30).replace(/[^\d.-]/g, '')) || 0;
@@ -31,12 +32,36 @@ app.post('/calcular-lucro', (req, res) => {
         return numeroArredondado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    // 4. GERAÇÃO AUTOMÁTICA DE GRÁFICOS VISUAIS (Bypass de Segurança do Discord)
+    // 4. GERAÇÃO DO GRÁFICO DIRETAMENTE NO SERVIDOR
     let g25 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro25;
     let g30 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro30;
-    
-    // Adicionado o final "&format=png&.png" para enganar o cache do Discord e forçar a renderização visual
-    const urlGraficoPizza = `https://quickchart.io:[%27Parceiros%27,%27Nao%20Parceiros%27],datasets:[%7Bdata:[${g25},${g30}],backgroundColor:[%27%232ecc71%27,%27%23e74c3c%27]%7D]%7D%7D&format=png&.png`;
+
+    let urlGraficoPizza = "";
+    try {
+        const myChart = new ChartJsImage();
+        myChart.setConfig({
+            type: 'pie',
+            data: {
+                labels: ['Parceiros', 'Nao Parceiros'],
+                datasets: [{
+                    data: [g25, g30],
+                    backgroundColor: ['#2ecc71', '#e74c3c']
+                }]
+            },
+            options: {
+                legend: { labels: { fontColor: '#ffffff', fontSize: 14 } },
+                title: { display: true, text: 'Divisao de Lucros Ollympyus', fontColor: '#ffffff', fontSize: 18 }
+            }
+        });
+        myChart.setBackgroundColor('#1b1c21');
+        
+        // Retorna uma URL curta e pré-renderizada estável para o BotGhost
+        urlGraficoPizza = await myChart.getShortUrl();
+    } catch (error) {
+        console.log("Erro ao gerar gráfico:", error);
+        // Fallback caso a API de renderização falhe
+        urlGraficoPizza = "https://quickchart.io:[%27Erro%27],datasets:[%7Bdata:[1]%7D]%7D%7D";
+    }
 
     // 5. Retorna os dados mapeados para o BotGhost incluindo os links dos gráficos
     res.json({
@@ -52,4 +77,4 @@ app.post('/calcular-lucro', (req, res) => {
     });
 });
 
-app.listen(3000, () => console.log('API Ollympyus Decimal String + Gráficos Rodando!'));
+app.listen(3000, () => console.log('API Ollympyus Gráficos Estáticos Rodando!'));
