@@ -4,27 +4,32 @@ const app = express();
 app.use(express.json());
 
 app.post('/calcular-lucro', async (req, res) => {
-    // 1. Limpa e converte as entradas diretamente de texto para números decimais reais
+    // 1. Limpa e converte as entradas diretamente de texto para números
     let lucro25 = parseFloat(String(req.body.lucro_acumulado_25).replace(/[^\d.-]/g, '')) || 0;
     let lucro30 = parseFloat(String(req.body.lucro_acumulado_30).replace(/[^\d.-]/g, '')) || 0;
+    let lucroMembros = parseFloat(String(req.body.lucro_membros_acumulado).replace(/[^\d.-]/g, '')) || 0;
+    
     let valorBruto = parseFloat(String(req.body.valor_bruto).replace(/[^\d.-]/g, '')) || 0;
-    let tipoLavagem = req.body.tipo; 
+    let tipoLavagem = req.body.tipo; // 'parceiro', 'nao_parceiro', 'membro' ou 'leitura'
 
     // 2. Acumula os valores conforme o clique atual de registro
     if (tipoLavagem === 'parceiro') {
         lucro25 += (valorBruto * 0.25);
     } else if (tipoLavagem === 'nao_parceiro') {
         lucro30 += (valorBruto * 0.30);
-    } else if (tipoLavagem === 'leitura') {
-        lucro25 = lucro25;
-        lucro30 = lucro30;
+    } else if (tipoLavagem === 'membro') {
+        // Membros também pagam taxa de 25%
+        lucroMembros += (valorBruto * 0.25);
     }
 
     // 3. Processa a matemática global com precisão decimal exata
-    let faturamentoCheio = (lucro25 * 4) + (lucro30 / 0.30);
-    let lucroRealGeral = lucro25 + lucro30;
-    let retido25 = lucro25 * 3; 
+    // Como Membros é 25%, multiplicamos o lucro deles por 4 para achar o faturamento bruto correspondente
+    let faturamentoCheio = (lucro25 * 4) + (lucro30 / 0.30) + (lucroMembros * 4);
+    let lucroRealGeral = lucro25 + lucro30 + lucroMembros; 
+    
+    let retido25 = lucro25 * 3;
     let retido30 = (lucro30 / 0.30) * 0.70;
+    let retidoMembros = lucroMembros * 3; // Valor retido do faturamento dos membros (75%)
 
     // Função interna para aplicar os pontos padrão brasileiro
     const formatarBR = (num) => {
@@ -32,9 +37,10 @@ app.post('/calcular-lucro', async (req, res) => {
         return numeroArredondado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
-    // 4. GERAÇÃO DO GRÁFICO GLOBAL NEUTRO (SEM TÍTULO FIXO)
-    let g25 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro25;
-    let g30 = lucro25 === 0 && lucro30 === 0 ? 1 : lucro30;
+    // 4. GERAÇÃO DO GRÁFICO GLOBAL COM TRÊS VARIÁVEIS
+    let g25 = lucro25 === 0 && lucro30 === 0 && lucroMembros === 0 ? 1 : lucro25;
+    let g30 = lucro25 === 0 && lucro30 === 0 && lucroMembros === 0 ? 1 : lucro30;
+    let gMembros = lucroMembros;
 
     let urlGraficoPizza = "";
     try {
@@ -42,40 +48,33 @@ app.post('/calcular-lucro', async (req, res) => {
         myChart.setConfig({
             type: 'pie',
             data: {
-                labels: ['Parceiros', 'Não Parceiros'],
+                labels: ['Parceiros', 'Não Parceiros', 'Membros'],
                 datasets: [{
-                    data: [g25, g30],
-                    backgroundColor: ['#2ecc71', '#ff4757'], 
-                    borderColor: '#1b1c21', 
-                    borderWidth: 3 
+                    data: [g25, g30, gMembros],
+                    backgroundColor: ['#2ecc71', '#ff4757', '#3498db'], // Verde, Vermelho, Azul
+                    borderColor: '#1b1c21',
+                    borderWidth: 3
                 }]
             },
             options: {
-                legend: { 
-                    labels: { fontColor: '#ffffff', fontSize: 14, fontStyle: 'bold' } 
+                legend: {
+                    labels: { fontColor: '#ffffff', fontSize: 14, fontStyle: 'bold' }
                 },
-                title: { 
-                    display: false // Desativa completamente o título interno do gráfico para torná-lo genérico
-                },
+                title: { display: false },
                 plugins: {
                     datalabels: {
                         display: true,
                         color: '#ffffff',
-                        font: {
-                            size: 16,
-                            weight: 'bold'
-                        },
+                        font: { size: 16, weight: 'bold' },
                         textShadowColor: '#000000',
                         textShadowBlur: 4
                     }
                 }
             }
         });
-        
         myChart.setWidth(500);
-        myChart.setHeight(300); // Reduzido levemente a altura para remover o espaço em branco do título
+        myChart.setHeight(300);
         myChart.setBackgroundColor('#1b1c21');
-        
         urlGraficoPizza = await myChart.getShortUrl();
     } catch (error) {
         console.log("Erro ao gerar gráfico:", error);
@@ -86,14 +85,20 @@ app.post('/calcular-lucro', async (req, res) => {
     res.json({
         lucro_puro_25: lucro25.toFixed(2),
         lucro_puro_30: lucro30.toFixed(2),
+        lucro_membros_puro: lucroMembros.toFixed(2),
+        
         lucro_acumulado_25: formatarBR(lucro25),
         lucro_acumulado_30: formatarBR(lucro30),
+        lucro_membros_acumulado: formatarBR(lucroMembros),
+        faturamento_membros_bruto: formatarBR(lucroMembros * 4), // Mostra o faturamento bruto gerado por membros
+        
         faturamento_total: formatarBR(faturamentoCheio),
         lucro_total_misturado: formatarBR(lucroRealGeral),
         liquido_retido_25: formatarBR(retido25),
         liquido_retido_30: formatarBR(retido30),
+        liquido_retido_membros: formatarBR(retidoMembros),
         grafico_url: urlGraficoPizza
     });
 });
 
-app.listen(3000, () => console.log('API Ollympyus Gráficos Global Neutro Rodando!'));
+app.listen(3000, () => console.log('API Ollympyus com Taxa de Membros a 25% Rodando!'));
