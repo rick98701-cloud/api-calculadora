@@ -8,7 +8,6 @@ app.post('/calcular-lucro', async (req, res) => {
     let lucro25 = parseFloat(String(req.body.lucro_acumulado_25).replace(/[^\d.-]/g, '')) || 0;
     let lucro30 = parseFloat(String(req.body.lucro_acumulado_30).replace(/[^\d.-]/g, '')) || 0;
     let lucroMembros = parseFloat(String(req.body.lucro_membros_acumulado).replace(/[^\d.-]/g, '')) || 0;
-    
     let valorBruto = parseFloat(String(req.body.valor_bruto).replace(/[^\d.-]/g, '')) || 0;
     let tipoLavagem = req.body.tipo; // 'parceiro', 'nao_parceiro', 'membro' ou 'leitura'
 
@@ -18,18 +17,16 @@ app.post('/calcular-lucro', async (req, res) => {
     } else if (tipoLavagem === 'nao_parceiro') {
         lucro30 += (valorBruto * 0.30);
     } else if (tipoLavagem === 'membro') {
-        // Membros também pagam taxa de 25%
+        // Membros também pagam taxa de 25% para a organização
         lucroMembros += (valorBruto * 0.25);
     }
 
     // 3. Processa a matemática global com precisão decimal exata
-    // Como Membros é 25%, multiplicamos o lucro deles por 4 para achar o faturamento bruto correspondente
     let faturamentoCheio = (lucro25 * 4) + (lucro30 / 0.30) + (lucroMembros * 4);
-    let lucroRealGeral = lucro25 + lucro30 + lucroMembros; 
-    
+    let lucroRealGeral = lucro25 + lucro30 + lucroMembros;
     let retido25 = lucro25 * 3;
     let retido30 = (lucro30 / 0.30) * 0.70;
-    let retidoMembros = lucroMembros * 3; // Valor retido do faturamento dos membros (75%)
+    let retidoMembros = lucroMembros * 3; 
 
     // Função interna para aplicar os pontos padrão brasileiro
     const formatarBR = (num) => {
@@ -41,8 +38,8 @@ app.post('/calcular-lucro', async (req, res) => {
     let g25 = lucro25 === 0 && lucro30 === 0 && lucroMembros === 0 ? 1 : lucro25;
     let g30 = lucro25 === 0 && lucro30 === 0 && lucroMembros === 0 ? 1 : lucro30;
     let gMembros = lucroMembros;
-
     let urlGraficoPizza = "";
+
     try {
         const myChart = new ChartJsImage();
         myChart.setConfig({
@@ -51,24 +48,16 @@ app.post('/calcular-lucro', async (req, res) => {
                 labels: ['Parceiros', 'Não Parceiros', 'Membros'],
                 datasets: [{
                     data: [g25, g30, gMembros],
-                    backgroundColor: ['#2ecc71', '#ff4757', '#3498db'], // Verde, Vermelho, Azul
+                    backgroundColor: ['#2ecc71', '#ff4757', '#3498db'],
                     borderColor: '#1b1c21',
                     borderWidth: 3
                 }]
             },
             options: {
-                legend: {
-                    labels: { fontColor: '#ffffff', fontSize: 14, fontStyle: 'bold' }
-                },
+                legend: { labels: { fontColor: '#ffffff', fontSize: 14, fontStyle: 'bold' } },
                 title: { display: false },
                 plugins: {
-                    datalabels: {
-                        display: true,
-                        color: '#ffffff',
-                        font: { size: 16, weight: 'bold' },
-                        textShadowColor: '#000000',
-                        textShadowBlur: 4
-                    }
+                    datalabels: { display: true, color: '#ffffff', font: { size: 16, weight: 'bold' }, textShadowColor: '#000000', textShadowBlur: 4 }
                 }
             }
         });
@@ -86,18 +75,20 @@ app.post('/calcular-lucro', async (req, res) => {
         lucro_puro_25: lucro25.toFixed(2),
         lucro_puro_30: lucro30.toFixed(2),
         lucro_membros_puro: lucroMembros.toFixed(2),
-        
         lucro_acumulado_25: formatarBR(lucro25),
         lucro_acumulado_30: formatarBR(lucro30),
         lucro_membros_acumulado: formatarBR(lucroMembros),
-        faturamento_membros_bruto: formatarBR(lucroMembros * 4), // Mostra o faturamento bruto gerado por membros
-        
+        faturamento_membros_bruto: formatarBR(lucroMembros * 4), 
         faturamento_total: formatarBR(faturamentoCheio),
         lucro_total_misturado: formatarBR(lucroRealGeral),
         liquido_retido_25: formatarBR(retido25),
         liquido_retido_30: formatarBR(retido30),
         liquido_retido_membros: formatarBR(retidoMembros),
-        grafico_url: urlGraficoPizza
+        grafico_url: urlGraficoPizza,
+        
+        // NOVOS CAMPOS TRATADOS PARA O CLIQUE ATUAL:
+        valor_bruto_atual: formatarBR(valorBruto),
+        retido_atual_membro: formatarBR(valorBruto * 0.75) // 75% que fica com o membro neste clique
     });
 });
 
