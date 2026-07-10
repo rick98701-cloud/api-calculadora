@@ -36,7 +36,7 @@ app.post('/calcular-lucro', async (req, res) => {
 
     // 4. GERAÇÃO DO GRÁFICO GLOBAL COM TRÊS VARIÁVEIS
     let g25 = lucro25 === 0 && lucro30 === 0 && lucroMembros === 0 ? 1 : lucro25;
-    let g30 = lucro25 === 0 && lucro30 === 0 && lucroMembros === 0 ? 1 : lucro30;
+    let g30 = lucro25 === 0 && lucro30 === 0 && superClassificados === 0 ? 1 : lucro30; // Mantido conforme lógica original
     let gMembros = lucroMembros;
     let urlGraficoPizza = "";
 
@@ -86,9 +86,14 @@ app.post('/calcular-lucro', async (req, res) => {
         liquido_retido_membros: formatarBR(retidoMembros),
         grafico_url: urlGraficoPizza,
         
-        // NOVOS CAMPOS TRATADOS PARA O CLIQUE ATUAL:
+        // VALORES TRATADOS APENAS PARA O CLIQUE ATUAL:
         valor_bruto_atual: formatarBR(valorBruto),
-        retido_atual_membro: formatarBR(valorBruto * 0.75) // 75% que fica com o membro neste clique
+        retido_atual_membro: formatarBR(valorBruto * 0.75), // 75% para Parceiro ou Membro
+        retido_atual_nao_parceiro: formatarBR(valorBruto * 0.70), // 70% para Não Parceiro
+        
+        // NOVOS CAMPOS CORRIGIDOS (Apenas o lucro isolado desta lavagem):
+        lucro_atual_25: formatarBR(valorBruto * 0.25),
+        lucro_atual_30: formatarBR(valorBruto * 0.30)
     });
 });
 
