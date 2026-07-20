@@ -12,14 +12,36 @@ app.post('/calcular-lucro', async (req, res) => {
     let tipoLavagem = req.body.tipo; // 'parceiro', 'nao_parceiro', 'membro' ou 'leitura'
 
     // 2. Acumula os valores conforme o clique atual de registro
-    if (tipoLavagem === 'parceiro') {
+    let lucroVigenteMembro = 0;
+    let retidoVigenteMembro = 0;
+
+    if (tipoLavagem === 'membro') {
+        if (req.body.origem_dinheiro === 'repasse') {
+            // EXEMPLO DO SEU TEXTO:
+            // Se valorBruto for 100 -> Ganho da pessoa = 25 (25%)
+            let ganhoPessoa = valorBruto * 0.25; 
+            
+            // O lucro da facção é 25% em cima dos 25 da pessoa (Ex: 6,25)
+            lucroVigenteMembro = ganhoPessoa * 0.25; 
+            
+            // O que sobra líquido para o membro (75% dos 25 -> Ex: 18,75)
+            retidoVigenteMembro = ganhoPessoa * 0.75;
+        } else {
+            // CASO PADRÃO (DINHEIRO PESSOAL):
+            // Conta normal sobre o valor bruto cheio
+            lucroVigenteMembro = valorBruto * 0.25;
+            retidoVigenteMembro = valorBruto * 0.75;
+        }
+        
+        // Acumula o lucro calculado no histórico global de membros
+        lucroMembros += lucroVigenteMembro;
+        
+    } else if (tipoLavagem === 'parceiro') {
         lucro25 += (valorBruto * 0.25);
     } else if (tipoLavagem === 'nao_parceiro') {
         lucro30 += (valorBruto * 0.30);
-    } else if (tipoLavagem === 'membro') {
-        // Membros também pagam taxa de 25% para a organização
-        lucroMembros += (valorBruto * 0.25);
     }
+
 
     // 3. Processa a matemática global com precisão decimal exata
     let faturamentoCheio = (lucro25 * 4) + (lucro30 / 0.30) + (lucroMembros * 4);
@@ -91,9 +113,9 @@ app.post('/calcular-lucro', async (req, res) => {
         retido_atual_membro: formatarBR(valorBruto * 0.75), // 75% para Parceiro ou Membro
         retido_atual_nao_parceiro: formatarBR(valorBruto * 0.70), // 70% para Não Parceiro
         
-        // NOVOS CAMPOS CORRIGIDOS (Apenas o lucro isolado desta lavagem):
-        lucro_atual_25: formatarBR(valorBruto * 0.25),
-        lucro_atual_30: formatarBR(valorBruto * 0.30)
+        // Substitua essas duas linhas no final do seu res.json:
+        retido_atual_membro: formatarBR(retidoVigenteMembro), 
+        lucro_atual_25: formatarBR(lucroVigenteMembro),
     });
 });
 
